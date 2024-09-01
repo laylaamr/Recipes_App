@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:recipe_app/service/dp_helper.dart';
 import 'tabs/recipeList.dart';
 import 'tabs/favouriteList.dart';
 
-void main() {
+void main() async {
+
+  WidgetsFlutterBinding.ensureInitialized();
+  await RecipeProvider().open();
+  await RecipeProvider().getrecipe();
   runApp(const MyApp());
 }
 
@@ -41,10 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: selectedIndex,
-        children: listWidget,
-      ),
+      body: listWidget[selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         onTap: _onItemTapped,
         currentIndex: selectedIndex,

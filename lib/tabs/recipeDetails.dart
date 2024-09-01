@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:recipe_app/service/dp_helper.dart';
 import 'package:recipe_app/tabs/favouriteList.dart';
 import 'package:recipe_app/widget/costumContainer.dart';
 import '../models/RecipeDetails.dart';
@@ -15,15 +16,41 @@ class RecipeDetails extends StatefulWidget {
 
 class _RecipeDetailsState extends State<RecipeDetails> {
   RecipeApi recipeApi = RecipeApi();
+  bool isFavorite = false;
 
   Future<Recipedetails> getAlldetails() async {
     final result = await recipeApi.getAlldetails(widget.recipemodel.id);
     return Recipedetails.fromjson(result);
   }
 
+  Future<void> _checkIfFavorite() async {
+    final db = RecipeProvider();
+    final favorites = await db.getrecipe();
+    setState(() {
+      isFavorite = favorites.any((recipe) => recipe.id == widget.recipemodel.id);
+    });
+  }
+
+  Future<void> _toggleFavorite() async {
+    try {
+      final db = RecipeProvider();
+      if (isFavorite) {
+        await db.delete(widget.recipemodel.id);
+      } else {
+        await db.insert(widget.recipemodel);
+      }
+      setState(() {
+        isFavorite = !isFavorite;
+      });
+    } catch (e) {
+      print("Error toggling favorite: $e");
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _checkIfFavorite();
     getAlldetails();
   }
 
@@ -42,16 +69,14 @@ class _RecipeDetailsState extends State<RecipeDetails> {
         ),
         actions: [
           IconButton(
-            icon: Icon(
-              Icons.favorite,
-              size: 25,
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const FavouriteList()),
-              );
+            onPressed: () async {
+              await _toggleFavorite();
             },
+            icon: Icon(
+              isFavorite ? Icons.favorite : Icons.favorite_border,
+              size: 25,
+              color: isFavorite ? Colors.red : Colors.grey,
+            ),
           ),
           Icon(Icons.play_arrow, size: 25),
           SizedBox(width: 5),
